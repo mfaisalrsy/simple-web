@@ -1,0 +1,28 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd ~/simple-web || git clone https://github.com/mfaisalrsy/simple-web.git ~/simple-web
+            cd ~/simple-web
+            git pull
+            sudo docker stop webapp || true
+            sudo docker rm webapp || true
+            sudo docker build -t htmlapp .
+            sudo docker run -d -p 80:80 --name webapp htmlapp
